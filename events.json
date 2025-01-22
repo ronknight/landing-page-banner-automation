@@ -1,124 +1,124 @@
 {
     "events": {
-      "NYDY": {
-        "full_name": "New Year's Day",
-        "spacer_color": "#b0b0b0",
-        "caption_color": "#000000"
-      },
-      "SPRB": {
-        "full_name": "Super Bowl Sunday",
-        "spacer_color": "#603000",
-        "caption_color": "#cccc00"
-      },
-      "VLTN": {
-        "full_name": "Valentine's Day",
-        "spacer_color": "#c00000",
-        "caption_color": "#ffffff"
-      },
-      "PRSD": {
-        "full_name": "President's Day",
-        "spacer_color": "#000050",
-        "caption_color": "#ffffff"
-      },
-      "FSTD": {
-        "full_name": "First Day of Spring",
-        "spacer_color": "#60b060",
-        "caption_color": "#000000"
-      },
-      "TXDY": {
-        "full_name": "Tax Day",
-        "spacer_color": "#b0b0b0",
-        "caption_color": "#000000"
-      },
-      "ESTR": {
-        "full_name": "Easter Sunday",
-        "spacer_color": "#cccc00",
-        "caption_color": "#000000"
-      },
-      "CNCM": {
-        "full_name": "Cinco de Mayo",
-        "spacer_color": "#005000",
-        "caption_color": "#ffffff"
-      },
-      "MOMD": {
-        "full_name": "Mother's Day",
-        "spacer_color": "#d08080",
-        "caption_color": "#c00000"
-      },
-      "PZZA": {
-        "full_name": "National Pizza Day",
-        "spacer_color": "#c06060",
-        "caption_color": "#000000"
-      },
-      "MMRL": {
-        "full_name": "Memorial Day",
-        "spacer_color": "#000050",
-        "caption_color": "#ffffff"
-      },
-      "FATD": {
-        "full_name": "Father's Day",
-        "spacer_color": "#000050",
-        "caption_color": "#ffffff"
-      },
-      "FSTS": {
-        "full_name": "First Day of Summer",
-        "spacer_color": "#cccc00",
-        "caption_color": "#000000"
-      },
-      "INPD": {
-        "full_name": "Independence Day",
-        "spacer_color": "#c00000",
-        "caption_color": "#000080"
-      },
-      "BCKT": {
-        "full_name": "Back-to-School",
-        "spacer_color": "#cc8000",
-        "caption_color": "#000000"
-      },
-      "DOGD": {
-        "full_name": "National Dog Day",
-        "spacer_color": "#503010",
-        "caption_color": "#ffffff"
-      },
-      "LBDR": {
-        "full_name": "Labor Day",
-        "spacer_color": "#000050",
-        "caption_color": "#ffffff"
-      },
-      "FSTA": {
-        "full_name": "First Day of Autumn",
-        "spacer_color": "#cc6000",
-        "caption_color": "#000000"
-      },
-      "HLWN": {
-        "full_name": "Halloween",
-        "spacer_color": "#cc6000",
-        "caption_color": "#000000"
-      },
-      "VTRN": {
-        "full_name": "Veterans Day",
-        "spacer_color": "#000050",
-        "caption_color": "#ffffff"
-      },
-      "THNK": {
-        "full_name": "Thanksgiving",
-        "spacer_color": "#802020",
-        "caption_color": "#ffffff"
-      },
-      "BLKF": {
-        "full_name": "Black Friday",
-        "spacer_color": "#000000",
-        "caption_color": "#ffffff"
-      },
-      "CYBR": {
-        "full_name": "Cyber Monday",
-        "spacer_color": "#000000",
-        "caption_color": "#ffffff"
-      },
-      "CHRS": {
-        "full_name": "Christmas Day",
-        "spacer_color": "#c00000",
-        "caption_color": "#005000"
-      }
+        "NYDY": {
+            "full_name": "New Year's Day",
+            "spacer_color": "#b0b0b0",
+            "caption_color": "#606060"
+        },
+        "SPRB": {
+            "full_name": "Super Bowl Sunday",
+            "spacer_color": "#603000",
+            "caption_color": "#cccc00"
+        },
+        "VLTN": {
+            "full_name": "Valentine's Day",
+            "spacer_color": "#c00000",
+            "caption_color": "#ff9999"
+        },
+        "PRSD": {
+            "full_name": "President's Day",
+            "spacer_color": "#000050",
+            "caption_color": "#8080ff"
+        },
+        "FSTD": {
+            "full_name": "First Day of Spring",
+            "spacer_color": "#60b060",
+            "caption_color": "#80d080"
+        },
+        "TXDY": {
+            "full_name": "Tax Day",
+            "spacer_color": "#b0b0b0",
+            "caption_color": "#606060"
+        },
+        "ESTR": {
+            "full_name": "Easter Sunday",
+            "spacer_color": "#cccc00",
+            "caption_color": "#a0a000"
+        },
+        "CNCM": {
+            "full_name": "Cinco de Mayo",
+            "spacer_color": "#005000",
+            "caption_color": "#80ff80"
+        },
+        "MOMD": {
+            "full_name": "Mother's Day",
+            "spacer_color": "#d08080",
+            "caption_color": "#ff6060"
+        },
+        "PZZA": {
+            "full_name": "National Pizza Day",
+            "spacer_color": "#c06060",
+            "caption_color": "#ff8080"
+        },
+        "MMRL": {
+            "full_name": "Memorial Day",
+            "spacer_color": "#000050",
+            "caption_color": "#8080ff"
+        },
+        "FATD": {
+            "full_name": "Father's Day",
+            "spacer_color": "#000050",
+            "caption_color": "#8080ff"
+        },
+        "FSTS": {
+            "full_name": "First Day of Summer",
+            "spacer_color": "#cccc00",
+            "caption_color": "#a0a000"
+        },
+        "INPD": {
+            "full_name": "Independence Day",
+            "spacer_color": "#c00000",
+            "caption_color": "#ff6060"
+        },
+        "BCKT": {
+            "full_name": "Back-to-School",
+            "spacer_color": "#cc8000",
+            "caption_color": "#ffaa00"
+        },
+        "DOGD": {
+            "full_name": "National Dog Day",
+            "spacer_color": "#503010",
+            "caption_color": "#a06030"
+        },
+        "LBDR": {
+            "full_name": "Labor Day",
+            "spacer_color": "#000050",
+            "caption_color": "#8080ff"
+        },
+        "FSTA": {
+            "full_name": "First Day of Autumn",
+            "spacer_color": "#cc6000",
+            "caption_color": "#ff8040"
+        },
+        "HLWN": {
+            "full_name": "Halloween",
+            "spacer_color": "#cc6000",
+            "caption_color": "#ff8040"
+        },
+        "VTRN": {
+            "full_name": "Veterans Day",
+            "spacer_color": "#000050",
+            "caption_color": "#8080ff"
+        },
+        "THNK": {
+            "full_name": "Thanksgiving",
+            "spacer_color": "#802020",
+            "caption_color": "#ff4040"
+        },
+        "BLKF": {
+            "full_name": "Black Friday",
+            "spacer_color": "#303030",
+            "caption_color": "#808080"
+        },
+        "CYBR": {
+            "full_name": "Cyber Monday",
+            "spacer_color": "#303030",
+            "caption_color": "#808080"
+        },
+        "CHRS": {
+            "full_name": "Christmas Day",
+            "spacer_color": "#c00000",
+            "caption_color": "#80a060"
+        }
     }
-  }
+}

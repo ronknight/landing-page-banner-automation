@@ -6,6 +6,8 @@ from wand.image import Image
 from wand.color import Color
 from wand.drawing import Drawing
 from dotenv import load_dotenv
+import json
+from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,7 +25,7 @@ def flatten_tif_to_image_in_memory(tif_file):
     try:
         # Run ImageMagick to convert the TIF to a PNG format in memory
         command = [
-            "C:\\Program Files\\ImageMagick-7.1.1-Q16-HDRI\\magick.exe",
+            "C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe",
             "convert",
             tif_file,
             "-quiet",
@@ -35,27 +37,53 @@ def flatten_tif_to_image_in_memory(tif_file):
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
         # Load the resulting PNG bytes into a Wand Image object
-        return Image(blob=result.stdout)
+        img = Image(blob=result.stdout)
+
+        # Trim whitespace from the image
+        img.trim()
+
+        return img
     except subprocess.CalledProcessError as e:
         print(f"Error processing TIF: {tif_file} - {e.stderr.decode('utf-8')}")
         return None
 
 def create_banner(item_numbers, caption, event_code):
     """
-    Creates a banner by placing flattened product images (TIF) on a transparent canvas
-    and saves it to the root directory.
+    Creates a banner by placing flattened product images (TIF) on a background image (bg.png),
+    adds a spacer and caption, and saves it to the root directory.
 
     Args:
         item_numbers (list): List of item numbers representing the TIF files.
         caption (str): Caption text to be added to the banner.
-        event_code (str): 4-letter code of the event for color scheme.
+        event_code (str): 4-letter event code of the event for color scheme.
     """
 
-    canvas_width = 500  # Example width for the transparent canvas
-    canvas_height = 500  # Example height for the transparent canvas
+    # Load event data from JSON file
+    with open("events.json", "r") as f:
+        events = json.load(f)
 
-    with Image(width=canvas_width, height=canvas_height, background=Color("transparent")) as canvas:
-        canvas.alpha_channel = 'activate'  # Ensure the canvas has a transparent background
+    if event_code not in events["events"]:
+        raise ValueError(f"Invalid event code: {event_code}. Please check your events.json file.")
+
+    caption_color = events["events"][event_code].get("spacer_color", "gray")
+    spacer_color = events["events"][event_code].get("caption_color", "black")
+    event_full_name = events["events"][event_code]["full_name"].lower().replace("'", "").replace(" ", "-")
+
+    background_path = os.path.join(os.getcwd(), "bg.png")
+
+    if not os.path.exists(background_path):
+        raise FileNotFoundError("Background image 'bg.png' not found in the current directory.")
+
+    # Open the background image as the canvas
+    with Image(filename=background_path) as canvas:
+
+        # Draw horizontal spacer above the caption (behind items)
+        spacer_y = canvas.height - 100  # Position the spacer 100px above the bottom
+        with Drawing() as draw:
+            draw.stroke_color = Color(spacer_color)  # Spacer color from JSON
+            draw.stroke_width = 8  # Thicker spacer line
+            draw.line((0, spacer_y), (canvas.width, spacer_y))  # Horizontal line
+            draw(canvas)
 
         for item_number in item_numbers:
             tif_file = os.path.join(os.environ.get("TIFF_DIRECTORY"), f"{item_number}.tif")
@@ -69,46 +97,38 @@ def create_banner(item_numbers, caption, event_code):
             if not img:
                 continue
 
-            # Resize the image to 70% of the canvas size while maintaining aspect ratio
-            scale_factor = 0.7
-            max_width = int(canvas_width * scale_factor)
-            max_height = int(canvas_height * scale_factor)
-            img.resize(min(img.width, max_width), min(img.height, max_height))
+            # Resize the image to fit within 75% of the canvas height while maintaining aspect ratio
+            max_height = int(canvas.height * 0.75)
+            max_width = int(canvas.width * 0.9)
+            img.transform(resize=f"{max_width}x{max_height}>")
 
             # Debug: Log resized dimensions
             print(f"Resized image dimensions: {img.width}x{img.height}")
 
             # Center the product image on the canvas
-            x = (canvas_width - img.width) // 2
-            y = (canvas_height - img.height - 100) // 2
-            print(f"Positioning image at: ({x}, {y})")  # Debug: Log position
+            x = (canvas.width - img.width) // 2
+            y = (canvas.height - img.height - 70) // 2  # Adjust to slightly overlap the spacer
 
-            # Composite the image onto the canvas
+            # Composite the product image on top of the canvas
             canvas.composite(img, left=x, top=y)
             img.close()  # Free memory for the image
 
-        # Draw horizontal spacer above the caption
-        spacer_y = canvas_height - 100  # Position the spacer 100px above the bottom
-        with Drawing() as draw:
-            draw.stroke_color = Color("gray")  # Spacer color
-            draw.stroke_width = 2
-            draw.line((0, spacer_y), (canvas_width, spacer_y))  # Horizontal line
-            draw(canvas)
-
         # Add caption text centered at the bottom
         with Drawing() as draw:
-            draw.font = "Arial"
-            draw.font_size = 20
-            draw.fill_color = Color("black")
+            draw.font = "Arial-Bold"
+            draw.font_size = 45  # Match the larger font size in the sample
+            draw.fill_color = Color(caption_color)  # Caption color from JSON
             draw.text_alignment = "center"
-            draw.text(canvas_width // 2, canvas_height - 50, caption)  # Position caption
+            draw.text(canvas.width // 2, canvas.height - 40, caption)  # Position caption closer to spacer
             draw(canvas)
 
         # Debug: Output final canvas dimensions
-        print(f"Canvas dimensions: {canvas_width}x{canvas_height}")
+        print(f"Canvas dimensions: {canvas.width}x{canvas.height}")
 
         # Generate output filename
-        output_filename = f"banner-{event_code}.webp"
+        caption_hyphenated = caption.lower().replace(" ", "-")
+        timestamp = datetime.now().strftime("%m%d")
+        output_filename = f"4sgm-{event_full_name}-wholesale-{caption_hyphenated}-{timestamp}.webp"
         output_path = os.path.join(os.getcwd(), output_filename)
 
         # Save the final image as WEBP
