@@ -77,15 +77,23 @@ def create_banner(item_numbers, caption, event_code):
     # Open the background image as the canvas
     with Image(filename=background_path) as canvas:
 
-        # Draw horizontal spacer above the caption (behind items)
-        spacer_y = canvas.height - 100  # Position the spacer 100px above the bottom
+        # Draw horizontal spacer above the caption
+        spacer_y = canvas.height - 150  # Adjust spacer position
         with Drawing() as draw:
             draw.stroke_color = Color(spacer_color)  # Spacer color from JSON
             draw.stroke_width = 8  # Thicker spacer line
             draw.line((0, spacer_y), (canvas.width, spacer_y))  # Horizontal line
             draw(canvas)
 
-        for item_number in item_numbers:
+        # Calculate grid layout for multiple items
+        item_count = len(item_numbers)
+        cols = 2 if item_count > 1 else 1
+        rows = (item_count + cols - 1) // cols
+
+        item_width = canvas.width // cols
+        item_height = int((canvas.height - 150) / rows)  # Adjust for spacer and caption space
+
+        for idx, item_number in enumerate(item_numbers):
             tif_file = os.path.join(os.environ.get("TIFF_DIRECTORY"), f"{item_number}.tif")
 
             if not os.path.exists(tif_file):
@@ -97,29 +105,56 @@ def create_banner(item_numbers, caption, event_code):
             if not img:
                 continue
 
-            # Resize the image to fit within 75% of the canvas height while maintaining aspect ratio
-            max_height = int(canvas.height * 0.75)
-            max_width = int(canvas.width * 0.9)
-            img.transform(resize=f"{max_width}x{max_height}>")
+            # Resize the image to fit within the calculated grid cell while maintaining aspect ratio
+            img.transform(resize=f"{item_width}x{item_height}>")
 
             # Debug: Log resized dimensions
             print(f"Resized image dimensions: {img.width}x{img.height}")
 
-            # Center the product image on the canvas
-            x = (canvas.width - img.width) // 2
-            y = (canvas.height - img.height - 70) // 2  # Adjust to slightly overlap the spacer
+            # Calculate position in the grid with offsets for spacing
+            col = idx % cols
+            row = idx // cols
+            x = col * item_width + (item_width - img.width + 10) // 2  # Add horizontal padding
+            y = row * item_height + (item_height - img.height + 20) // 2  # Add vertical padding
 
             # Composite the product image on top of the canvas
             canvas.composite(img, left=x, top=y)
             img.close()  # Free memory for the image
 
-        # Add caption text centered at the bottom
+        # Add caption text centered at the bottom, split into two lines if necessary
+        max_caption_width = canvas.width - 40
         with Drawing() as draw:
             draw.font = "Arial-Bold"
             draw.font_size = 45  # Match the larger font size in the sample
             draw.fill_color = Color(caption_color)  # Caption color from JSON
             draw.text_alignment = "center"
-            draw.text(canvas.width // 2, canvas.height - 40, caption)  # Position caption closer to spacer
+
+            # Split caption into two lines if it's too wide
+            words = caption.split()
+            lines = []
+            current_line = ""
+
+            for word in words:
+                test_line = f"{current_line} {word}".strip()
+                if draw.get_font_metrics(canvas, test_line).text_width <= max_caption_width:
+                    current_line = test_line
+                else:
+                    lines.append(current_line)
+                    current_line = word
+            if current_line:
+                lines.append(current_line)
+
+            # Adjust vertical position for single or multi-line captions
+            if len(lines) == 1:
+                caption_y = canvas.height - 60  # Move single-line caption higher
+                draw.text(canvas.width // 2, caption_y, lines[0])
+            else:
+                caption_y = canvas.height - 40
+                line_spacing = 40  # Add spacing between lines
+                for line in reversed(lines):
+                    draw.text(canvas.width // 2, caption_y, line)
+                    caption_y -= line_spacing
+
             draw(canvas)
 
         # Debug: Output final canvas dimensions
