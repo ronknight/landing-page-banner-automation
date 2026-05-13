@@ -1,0 +1,20 @@
+{
+  "name": "auto-documentation-system",
+  "interface": {
+    "displayName": "Auto-Documentation System"
+  },
+  "plugins": [
+    {
+      "name": "mempalace",
+      "source": {
+        "source": "local",
+        "path": "./mempalace/.codex-plugin"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "NONE"
+      },
+      "category": "Coding"
+    }
+  ]
+}

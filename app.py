@@ -25,7 +25,7 @@ def flatten_tif_to_image_in_memory(tif_file):
     try:
         # Run ImageMagick to convert the TIF to a PNG format in memory
         command = [
-            "C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe",
+            r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe",
             "convert",
             tif_file,
             "-quiet",
@@ -85,13 +85,44 @@ def create_banner(item_numbers, caption, event_code):
             draw.line((0, spacer_y), (canvas.width, spacer_y))  # Horizontal line
             draw(canvas)
 
-        # Calculate grid layout for multiple items
+        # Calculate grid layout for multiple items with optimal distribution
         item_count = len(item_numbers)
-        cols = 2 if item_count > 1 else 1
-        rows = (item_count + cols - 1) // cols
+        
+        # Determine optimal grid layout based on item count
+        if item_count == 1:
+            cols = 1
+            rows = 1
+        elif item_count == 2:
+            cols = 2
+            rows = 1
+        elif item_count == 3:
+            cols = 3
+            rows = 1
+        elif item_count == 4:
+            cols = 2
+            rows = 2
+        elif item_count == 5:
+            cols = 5
+            rows = 1
+        elif item_count == 6:
+            cols = 3
+            rows = 2
+        else:
+            # For larger counts, calculate optimal grid
+            cols = int(item_count ** 0.5)
+            rows = (item_count + cols - 1) // cols
 
+        # Calculate available space for items
+        row_spacing = 10  # 10px spacing between rows
+        available_height = canvas.height - 150 - ((rows - 1) * row_spacing)  # Reserve space for spacer, caption, and row gaps
+        item_height = int(available_height / rows)
         item_width = canvas.width // cols
-        item_height = int((canvas.height - 150) / rows)  # Adjust for spacer and caption space
+
+        # Calculate total grid dimensions
+        grid_width = cols * item_width
+        grid_height = rows * item_height
+        grid_start_x = (canvas.width - grid_width) // 2  # Center grid horizontally
+        grid_start_y = 10  # 10px top padding
 
         for idx, item_number in enumerate(item_numbers):
             tif_file = os.path.join(os.environ.get("TIFF_DIRECTORY"), f"{item_number}.tif")
@@ -109,17 +140,23 @@ def create_banner(item_numbers, caption, event_code):
             img.transform(resize=f"{item_width}x{item_height}>")
 
             # Debug: Log resized dimensions
-            print(f"Resized image dimensions: {img.width}x{img.height}")
+            print(f"Item {idx+1}: Resized image dimensions: {img.width}x{img.height}")
 
-            # Calculate position in the grid with offsets for spacing
+            # Calculate position in the grid with proper centering
             col = idx % cols
             row = idx // cols
-            x = col * item_width + (item_width - img.width + 10) // 2  # Add horizontal padding
-            y = row * item_height + (item_height - img.height + 20) // 2  # Add vertical padding
+            cell_x = grid_start_x + (col * item_width)
+            cell_y = grid_start_y + (row * item_height) + (row * row_spacing)
+            
+            # Center image within its grid cell
+            x = cell_x + (item_width - img.width) // 2
+            y = cell_y + (item_height - img.height) // 2
 
             # Composite the product image on top of the canvas
             canvas.composite(img, left=x, top=y)
             img.close()  # Free memory for the image
+        
+        print(f"Grid layout: {cols} columns x {rows} rows (item count: {item_count})")
 
         # Add caption text centered at the bottom, split into two lines if necessary
         max_caption_width = canvas.width - 40

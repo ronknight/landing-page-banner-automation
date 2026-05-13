@@ -57,8 +57,8 @@
         },
         "FATD": {
             "full_name": "Father's Day",
-            "spacer_color": "#000050",
-            "caption_color": "#8080ff"
+            "spacer_color": "#009985",
+            "caption_color": "#009a88"
         },
         "FSTS": {
             "full_name": "First Day of Summer",

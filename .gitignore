@@ -169,3 +169,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Auto-documentation system archives (keep local to avoid repo bloat)
+archive/
