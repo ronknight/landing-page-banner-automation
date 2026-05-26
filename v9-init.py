@@ -5,44 +5,37 @@ Comprehensive Auto-Documentation & AI Tools Configuration System Initializer
 Sets up documentation, AI tool configurations, and repository memory for all AI assistants.
 Automatically creates instructions, memory files, and compliance artifacts.
 
-Usage: python v9-init.py
+Usage: python init.py
 """
 
 import os
 import json
-import sys
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Set
+from typing import List, Dict
 
 class ComprehensiveDocSystemInit:
     def __init__(self):
         self.repo_root = Path.cwd()
-        self.selected_tools: Set[str] = set()  # AI tools selected by user
-        
-        # Core directories that should always be created
-        self.core_dirs_to_create = [
+        self.dirs_to_create = [
             'docs/adr',
             '.agents/plugins',
             '.github',
             'openspec/diagram', 
             'openspec/changes',
             'archive',
+            'hooks',
             '.copilot',
+            '.cursor',
+            '.windsurf',
+            '.cline',
+            '.vscode',
+            '.agent',
+            '.agents',
+            '.kilocode',
+            '.roo',
+            '.antigravity',
         ]
-        
-        # Optional tool folders (only create for selected tools)
-        self.tool_dirs = {
-            '.cursor': 'Cursor',
-            '.windsurf': 'Windsurf',
-            '.cline': 'Claude with Cline',
-            '.vscode': 'VS Code',
-            '.agent': 'Agent',
-            '.agents': 'Agents',
-            '.kilocode': 'Kilocode',
-            '.roo': 'Roo Cline',
-            '.antigravity': 'Antigravity',
-        }
         
         # AI tools that should receive configuration
         self.ai_tools = {
@@ -66,16 +59,10 @@ class ComprehensiveDocSystemInit:
         ]
         
     def create_directories(self):
-        """Create necessary directory structure - only core directories."""
-        for dir_path in self.core_dirs_to_create:
+        """Create necessary directory structure."""
+        for dir_path in self.dirs_to_create:
             (self.repo_root / dir_path).mkdir(parents=True, exist_ok=True)
         print("✓ Created directory structure")
-    
-    def create_tool_directories(self):
-        """Create tool directories only for selected tools."""
-        for tool_folder in self.selected_tools:
-            tool_path = self.repo_root / tool_folder
-            tool_path.mkdir(parents=True, exist_ok=True)
     
     def detect_ai_tool_folders(self):
         """Detect all available AI tool folders at repository root."""
@@ -85,265 +72,6 @@ class ComprehensiveDocSystemInit:
             if folder_path.exists() and folder_path.is_dir():
                 detected.append(folder_name)
         return detected
-    
-    def select_ai_tools_interactive(self) -> Set[str]:
-        """
-        Interactive AI tools selection menu.
-        Navigate with arrow keys, toggle with Space, remove with Backspace, confirm with Enter.
-        """
-        available_tools = list(self.ai_tools.keys())
-        selected: Set[str] = set()
-        current_index = 0
-        
-        while True:
-            # Clear screen and display menu
-            self._clear_screen()
-            
-            print("\n🤖 AI Tools Configuration Selection")
-            print("=" * 50)
-            print("Use arrow keys (↑↓) to navigate")
-            print("Space to toggle • Backspace to remove • Enter to confirm")
-            print("=" * 50)
-            
-            print("\n📋 Available AI Tools:\n")
-            for i, tool in enumerate(available_tools):
-                checkbox = "☑" if tool in selected else "☐"
-                pointer = "→ " if i == current_index else "  "
-                tool_name = self.ai_tools[tool]
-                print(f"{pointer}{checkbox} {tool:<15} ({tool_name})")
-            
-            print("\n[↑↓] Navigate | [Space] Toggle | [Backspace] Remove | [Enter] Confirm")
-            
-            # Show current selection
-            if selected:
-                print(f"\n✓ Selected: {', '.join(sorted(selected))}")
-            else:
-                print("\n(No tools selected yet)")
-            
-            # Read single key input
-            key = self._read_single_key()
-            
-            if key == 'up':
-                current_index = (current_index - 1) % len(available_tools)
-            elif key == 'down':
-                current_index = (current_index + 1) % len(available_tools)
-            elif key == 'space':
-                tool = available_tools[current_index]
-                if tool in selected:
-                    selected.discard(tool)
-                else:
-                    selected.add(tool)
-            elif key == 'backspace':
-                tool = available_tools[current_index]
-                selected.discard(tool)
-            elif key == 'enter':
-                break
-            elif key == 'q':  # Allow quick exit
-                return selected
-        
-        return selected
-    
-    def _read_single_key(self) -> str:
-        """
-        Read a single key input cross-platform.
-        Returns: 'up', 'down', 'space', 'enter', 'backspace', 'q'
-        """
-        try:
-            if sys.platform == 'win32':
-                import msvcrt
-                key = msvcrt.getch()
-                if key == b'\xe0':  # Arrow keys prefix on Windows
-                    key = msvcrt.getch()
-                    if key == b'H':
-                        return 'up'
-                    elif key == b'P':
-                        return 'down'
-                elif key == b' ':
-                    return 'space'
-                elif key == b'\r':  # Enter
-                    return 'enter'
-                elif key == b'\x08':  # Backspace
-                    return 'backspace'
-                elif key == b'q':
-                    return 'q'
-            else:
-                import tty
-                import termios
-                fd = sys.stdin.fileno()
-                old_settings = termios.tcgetattr(fd)
-                try:
-                    tty.setraw(fd)
-                    key = sys.stdin.read(1)
-                    
-                    # Handle arrow keys on Unix
-                    if key == '\x1b':  # Escape sequence
-                        sys.stdin.read(1)  # [
-                        key = sys.stdin.read(1)
-                        if key == 'A':
-                            return 'up'
-                        elif key == 'B':
-                            return 'down'
-                    elif key == ' ':
-                        return 'space'
-                    elif key == '\r':
-                        return 'enter'
-                    elif key == '\x7f':  # Backspace on Unix
-                        return 'backspace'
-                    elif key == 'q':
-                        return 'q'
-                finally:
-                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        except Exception:
-            pass
-        
-        return ''
-    
-    def _clear_screen(self):
-        """Clear screen cross-platform."""
-        if sys.platform == 'win32':
-            os.system('cls')
-        else:
-            os.system('clear')
-    
-    def select_ai_tools_simple(self) -> Set[str]:
-        """Simple text-based AI tools selection (fallback)."""
-        available_tools = list(self.ai_tools.keys())
-        selected: Set[str] = set()
-        
-        print("\n🤖 AI Tools Configuration Selection")
-        print("=" * 60)
-        print("Select which AI tools to configure:\n")
-        
-        for i, tool in enumerate(available_tools, 1):
-            tool_name = self.ai_tools[tool]
-            print(f"{i}. {tool:<15} ({tool_name})")
-        
-        print("\nOptions:")
-        print("  • Enter numbers (1,2,3) to select specific tools")
-        print("  • Type 'all' to select all tools")
-        print("  • Type 'none' to skip AI tool configuration")
-        print("  • Press Enter alone to cancel")
-        
-        choice = input("\n→ Your selection: ").strip().lower()
-        
-        if choice == 'all':
-            return set(available_tools)
-        elif choice == 'none':
-            return set()
-        elif not choice:
-            print("❌ Selection cancelled")
-            return set()
-        else:
-            try:
-                indices = [int(x.strip()) - 1 for x in choice.split(',')]
-                for idx in indices:
-                    if 0 <= idx < len(available_tools):
-                        selected.add(available_tools[idx])
-                return selected
-            except ValueError:
-                print("❌ Invalid selection format")
-                return set()
-    
-    def get_previously_configured_tools(self) -> Set[str]:
-        """Get set of AI tools that already have configuration files or folders."""
-        configured = set()
-        
-        # Check for folders with config files
-        for tool_folder in self.ai_tools.keys():
-            tool_path = self.repo_root / tool_folder
-            memory_file = tool_path / 'repository-memory.md'
-            if memory_file.exists():
-                configured.add(tool_folder)
-        
-        # Also check for tool directories that exist even if files are missing
-        # (orphaned folders from previous runs)
-        for tool_folder in self.ai_tools.keys():
-            tool_path = self.repo_root / tool_folder
-            if tool_path.exists() and tool_path.is_dir():
-                # If the folder exists, add it to configured set
-                # (even if files are missing, it's still a tool folder to clean)
-                configured.add(tool_folder)
-        
-        return configured
-    
-    def cleanup_removed_tools(self, previously_configured: Set[str], newly_selected: Set[str]):
-        """Remove configuration files and directories from tools that were configured but are no longer selected."""
-        # Never delete these - they're core infrastructure
-        core_folders = {'.copilot', '.agents', '.github', '.vscode'}
-        tools_to_remove = (previously_configured - newly_selected) - core_folders
-        
-        if not tools_to_remove:
-            return
-        
-        print(f"\n🗑️  Cleaning up removed tool configurations ({len(tools_to_remove)} tool(s)):")
-        for tool_folder in sorted(tools_to_remove):
-            tool_path = self.repo_root / tool_folder
-            
-            if not tool_path.exists():
-                continue
-            
-            # Try multiple approaches to remove the directory
-            removed = False
-            
-            # Approach 1: Try shutil.rmtree with ignore_errors
-            try:
-                import shutil
-                shutil.rmtree(tool_path, ignore_errors=True)
-                removed = True
-            except Exception:
-                pass
-            
-            # Approach 2: If still exists, try recursive file/directory deletion
-            if tool_path.exists():
-                try:
-                    self._recursive_remove(tool_path)
-                    removed = True
-                except Exception:
-                    pass
-            
-            if tool_path.exists():
-                # Still couldn't remove - try to at least remove config files
-                try:
-                    for file_path in tool_path.rglob('*'):
-                        if file_path.is_file():
-                            file_path.unlink(missing_ok=True)
-                except Exception:
-                    pass
-                
-                # Try to remove empty directory
-                try:
-                    tool_path.rmdir()
-                    removed = True
-                except Exception:
-                    pass
-            
-            if removed or not tool_path.exists():
-                print(f"   ✓ Removed: {tool_folder}/")
-            else:
-                print(f"   ⚠️  Could not remove: {tool_folder}/ (may be in use)")
-    
-    def _recursive_remove(self, path: Path):
-        """Recursively remove a directory and all its contents."""
-        if path.is_file():
-            path.unlink(missing_ok=True)
-        elif path.is_dir():
-            for child in path.iterdir():
-                self._recursive_remove(child)
-            path.rmdir()
-    
-    def show_selected_tools(self):
-        """Display summary of selected tools."""
-        if not self.selected_tools:
-            print("\n⚠️  No AI tools selected for configuration")
-            return
-        
-        print(f"\n✅ Selected AI Tools ({len(self.selected_tools)}):")
-        for tool in sorted(self.selected_tools):
-            tool_name = self.ai_tools[tool]
-            print(f"   • {tool:<15} - {tool_name}")
-        print()
-
-
     
     def create_archive_script(self):
         """Create shell archiving script for Unix/Linux/Mac."""
@@ -493,7 +221,425 @@ Write-Host "$totalItems items archived"
         
         (self.repo_root / 'archive-project.ps1').write_text(ps_content, encoding='utf-8')
         print("✓ Created: archive-project.ps1 (Windows)")
-    
+
+    def create_doc_validator(self):
+        """Create documentation compliance validator script."""
+        content = '''#!/usr/bin/env python3
+"""
+Documentation Compliance Validator
+
+Checks that required documentation files are updated alongside code changes.
+Designed to run as a pre-commit hook or standalone check.
+
+Usage:
+    python validate_docs.py              # Check staged changes
+    python validate_docs.py --all        # Check all uncommitted changes
+    python validate_docs.py --strict     # Fail on any missing doc update
+    python validate_docs.py --fix        # Show what needs updating
+
+Exit codes:
+    0 = All checks passed
+    1 = Documentation updates missing
+"""
+
+import subprocess
+import sys
+import os
+from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Set, Tuple
+
+
+# ── Configuration ──────────────────────────────────────────────────────────
+
+# Files that count as "code changes" (trigger doc requirements)
+CODE_PATTERNS = {
+    "*.py",
+    "*.html",
+    "config*.json",
+    "data/mapping.json",
+    "requirements.txt",
+}
+
+# Files that are excluded from triggering doc requirements
+EXCLUDE_PATTERNS = {
+    "validate_docs.py",
+    "v9-init.py",
+    "migrate_env_to_json.py",
+    "verify_data.py",
+    "tests/*",
+    "archive/*",
+}
+
+# Required documentation files and when they must be updated
+DOC_REQUIREMENTS: Dict[str, Dict] = {
+    "CHANGELOG.md": {
+        "triggers": "any_code_change",
+        "description": "Every code change needs a CHANGELOG entry",
+        "severity": "error",
+    },
+    "README.md": {
+        "triggers": "cli_or_usage_change",
+        "watch_patterns": ["main.py", "requirements.txt", "config*.json"],
+        "watch_content": ["argparse", "--", "sys.argv", "def main", "Usage"],
+        "description": "CLI, config, or usage changes need README update",
+        "severity": "warning",
+    },
+    "PRD.md": {
+        "triggers": "feature_or_architecture_change",
+        "watch_patterns": ["main.py", "pipeline.py", "*.py"],
+        "watch_content": ["class ", "def main", "import", "new feature"],
+        "description": "New features or architecture changes need PRD update",
+        "severity": "warning",
+    },
+    "openspec/diagram/dataflow.md": {
+        "triggers": "pipeline_or_data_change",
+        "watch_patterns": [
+            "pipeline.py", "csv_loader.py", "webjaguar_client.py",
+            "json_storage.py", "email_generator.py", "main.py",
+        ],
+        "description": "Pipeline or data flow changes need diagram update",
+        "severity": "warning",
+    },
+    "openspec/diagram/workflow.md": {
+        "triggers": "cli_or_workflow_change",
+        "watch_patterns": ["main.py"],
+        "watch_content": ["sys.argv", "--", "argparse"],
+        "description": "CLI or workflow changes need workflow diagram update",
+        "severity": "warning",
+    },
+}
+
+# ADR trigger patterns (content changes that warrant an ADR)
+ADR_TRIGGERS = [
+    "class ",        # New classes = architectural
+    "import ",       # New dependencies
+    "BREAKING",      # Breaking changes
+    "def __init__",  # New components
+]
+
+
+# ── Git Helpers ────────────────────────────────────────────────────────────
+
+def run_git(args: List[str]) -> str:
+    """Run a git command and return stdout."""
+    result = subprocess.run(
+        ["git"] + args,
+        capture_output=True, text=True, cwd=Path(__file__).parent
+    )
+    return result.stdout.strip()
+
+
+def get_changed_files(staged_only: bool = True) -> List[str]:
+    """Get list of changed files from git."""
+    if staged_only:
+        return run_git(["diff", "--cached", "--name-only"]).splitlines()
+    else:
+        # All uncommitted changes (staged + unstaged)
+        staged = run_git(["diff", "--cached", "--name-only"]).splitlines()
+        unstaged = run_git(["diff", "--name-only"]).splitlines()
+        untracked = run_git(["ls-files", "--others", "--exclude-standard"]).splitlines()
+        return list(set(staged + unstaged + untracked))
+
+
+def get_diff_content(filepath: str, staged_only: bool = True) -> str:
+    """Get the diff content for a specific file."""
+    if staged_only:
+        return run_git(["diff", "--cached", filepath])
+    else:
+        return run_git(["diff", filepath])
+
+
+def matches_pattern(filepath: str, patterns: Set[str]) -> bool:
+    """Check if a filepath matches any glob-like pattern."""
+    from fnmatch import fnmatch
+    return any(fnmatch(filepath, p) for p in patterns)
+
+
+# ── Validation Logic ──────────────────────────────────────────────────────
+
+def classify_changes(changed_files: List[str]) -> Dict[str, bool]:
+    """Classify what types of changes are present."""
+    classification = {
+        "any_code_change": False,
+        "cli_or_usage_change": False,
+        "feature_or_architecture_change": False,
+        "pipeline_or_data_change": False,
+        "cli_or_workflow_change": False,
+        "needs_adr": False,
+    }
+
+    code_files = [
+        f for f in changed_files
+        if matches_pattern(f, CODE_PATTERNS)
+        and not matches_pattern(f, EXCLUDE_PATTERNS)
+    ]
+
+    if not code_files:
+        return classification
+
+    classification["any_code_change"] = True
+
+    # Check for CLI/usage changes
+    cli_files = {"main.py", "requirements.txt"}
+    if cli_files & set(code_files):
+        classification["cli_or_usage_change"] = True
+        classification["cli_or_workflow_change"] = True
+
+    # Check for pipeline/data changes
+    pipeline_files = {
+        "pipeline.py", "csv_loader.py", "webjaguar_client.py",
+        "json_storage.py", "email_generator.py", "main.py",
+    }
+    if pipeline_files & set(code_files):
+        classification["pipeline_or_data_change"] = True
+
+    # Check for feature/architecture changes (new files or significant changes)
+    py_files = [f for f in code_files if f.endswith(".py")]
+    if py_files:
+        classification["feature_or_architecture_change"] = True
+
+    # Check for config changes
+    config_files = [f for f in code_files if "config" in f.lower() and f.endswith(".json")]
+    if config_files:
+        classification["cli_or_usage_change"] = True
+
+    return classification
+
+
+def check_adr_needed(changed_files: List[str], staged_only: bool = True) -> bool:
+    """Check if an ADR should be created for these changes."""
+    adr_dir = Path(__file__).parent / "docs" / "adr"
+    today = datetime.now().strftime("%Y%m%d")
+
+    # If an ADR was already created today, skip
+    if adr_dir.exists():
+        for f in adr_dir.iterdir():
+            if f.name.startswith(today):
+                return False
+
+    # Check diff content for ADR triggers
+    for filepath in changed_files:
+        if filepath.endswith(".py") and not matches_pattern(filepath, EXCLUDE_PATTERNS):
+            diff = get_diff_content(filepath, staged_only)
+            added_lines = [
+                line[1:] for line in diff.splitlines()
+                if line.startswith("+") and not line.startswith("+++")
+            ]
+            for line in added_lines:
+                for trigger in ADR_TRIGGERS:
+                    if trigger in line:
+                        return True
+    return False
+
+
+def validate(
+    staged_only: bool = True,
+    strict: bool = False,
+) -> Tuple[List[str], List[str], List[str]]:
+    """
+    Validate documentation compliance.
+
+    Returns:
+        (errors, warnings, passes) - lists of message strings
+    """
+    errors: List[str] = []
+    warnings: List[str] = []
+    passes: List[str] = []
+
+    changed_files = get_changed_files(staged_only)
+    if not changed_files:
+        passes.append("No changes detected")
+        return errors, warnings, passes
+
+    classification = classify_changes(changed_files)
+    if not classification["any_code_change"]:
+        passes.append("No code changes detected (docs-only or excluded files)")
+        return errors, warnings, passes
+
+    # Check each required doc file
+    doc_files_changed = set(changed_files)
+    for doc_file, config in DOC_REQUIREMENTS.items():
+        trigger_type = config["triggers"]
+
+        if not classification.get(trigger_type, False):
+            continue
+
+        if doc_file in doc_files_changed:
+            passes.append(f"  PASS  {doc_file} — updated")
+        else:
+            msg = f"  MISS  {doc_file} — {config['description']}"
+            if config["severity"] == "error" or strict:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+
+    # Check ADR requirement
+    if check_adr_needed(changed_files, staged_only):
+        today = datetime.now().strftime("%Y%m%d")
+        adr_created = any(
+            f.startswith(f"docs/adr/{today}") for f in doc_files_changed
+        )
+        if adr_created:
+            passes.append("  PASS  docs/adr/ — ADR created for today")
+        else:
+            msg = "  MISS  docs/adr/ — Architectural change detected, ADR recommended"
+            if strict:
+                errors.append(msg)
+            else:
+                warnings.append(msg)
+
+    # Check archive (only warn if no recent archive exists)
+    archive_dir = Path(__file__).parent / "archive"
+    if archive_dir.exists():
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        has_today_archive = any(
+            d.name.startswith(today_str) for d in archive_dir.iterdir() if d.is_dir()
+        )
+        if has_today_archive:
+            passes.append("  PASS  archive/ — Today\'s archive exists")
+        else:
+            warnings.append("  MISS  archive/ — No archive created today (run archive-project.ps1)")
+
+    return errors, warnings, passes
+
+
+# ── CLI ────────────────────────────────────────────────────────────────────
+
+def main() -> int:
+    staged_only = "--all" not in sys.argv
+    strict = "--strict" in sys.argv
+    fix_mode = "--fix" in sys.argv
+
+    print()
+    print("=" * 60)
+    print("  Documentation Compliance Check")
+    print("=" * 60)
+    print()
+
+    errors, warnings, passes = validate(staged_only=staged_only, strict=strict)
+
+    # Print results
+    for msg in passes:
+        print(f"\\033[92m{msg}\\033[0m")  # Green
+    for msg in warnings:
+        print(f"\\033[93m{msg}\\033[0m")  # Yellow
+    for msg in errors:
+        print(f"\\033[91m{msg}\\033[0m")  # Red
+
+    print()
+
+    if fix_mode and (errors or warnings):
+        print("Suggested actions:")
+        print("-" * 40)
+        all_issues = errors + warnings
+        for issue in all_issues:
+            if "CHANGELOG" in issue:
+                print("  - Add entry to CHANGELOG.md:")
+                print(f"    #### {datetime.now().strftime(\'%Y-%m-%d\')} - <Feature/Fix Name>")
+                print("    - Description of change")
+            elif "README" in issue:
+                print("  - Update README.md usage/features if CLI or config changed")
+            elif "PRD" in issue:
+                print("  - Update PRD.md sections for new/modified features")
+            elif "dataflow" in issue:
+                print("  - Update openspec/diagram/dataflow.md if data flow changed")
+            elif "workflow" in issue:
+                print("  - Update openspec/diagram/workflow.md if user workflow changed")
+            elif "adr" in issue:
+                today = datetime.now().strftime("%Y%m%d")
+                print(f"  - Create docs/adr/{today}-<decision-name>.md")
+            elif "archive" in issue:
+                print("  - Run: .\\\\archive-project.ps1")
+        print()
+
+    total = len(errors) + len(warnings) + len(passes)
+    print(f"Results: {len(passes)} passed, {len(warnings)} warnings, {len(errors)} errors")
+    print()
+
+    if errors:
+        print("\\033[91mCOMMIT BLOCKED: Fix documentation gaps above before committing.\\033[0m")
+        print("Use --fix for suggestions. Use --all to check unstaged changes too.")
+        print()
+        return 1
+
+    if warnings:
+        print("\\033[93mWARNINGS: Consider updating the files above.\\033[0m")
+        print()
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+'''
+
+        (self.repo_root / 'validate_docs.py').write_text(content, encoding='utf-8')
+        print("✓ Created: validate_docs.py")
+
+    def create_pre_commit_hook(self):
+        """Create pre-commit hook and installer script."""
+        hook_content = '''#!/bin/sh
+# Pre-commit hook: Documentation Compliance Validator
+# Blocks commits when required documentation files are not updated alongside code changes.
+#
+# Install: copy or symlink this file to .git/hooks/pre-commit
+#   cp hooks/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit   (Unix/Mac)
+#
+# Skip (emergency): git commit --no-verify
+# Note: --no-verify should be used sparingly; it bypasses all doc checks.
+
+python validate_docs.py --strict 2>&1
+
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo ""
+    echo "Commit aborted by documentation compliance check."
+    echo "Fix the issues above, then retry your commit."
+    echo ""
+    echo "To bypass (emergency only): git commit --no-verify"
+    exit 1
+fi
+
+exit 0
+'''
+
+        (self.repo_root / 'hooks' / 'pre-commit').write_text(hook_content, encoding='utf-8')
+        print("✓ Created: hooks/pre-commit")
+
+        installer_content = '''# Install Git hooks for documentation compliance
+# Usage: .\\install-hooks.ps1
+
+$HookSource = Join-Path (Join-Path $PSScriptRoot "hooks") "pre-commit"
+$HookTarget = Join-Path (Join-Path $PSScriptRoot ".git") (Join-Path "hooks" "pre-commit")
+
+if (-not (Test-Path $HookSource)) {
+    Write-Host "Error: hooks/pre-commit not found" -ForegroundColor Red
+    exit 1
+}
+
+Copy-Item -Path $HookSource -Destination $HookTarget -Force
+Write-Host "Installed pre-commit hook to .git/hooks/pre-commit" -ForegroundColor Green
+Write-Host ""
+Write-Host "Documentation compliance will now be checked before every commit."
+Write-Host "Use \'git commit --no-verify\' to bypass in emergencies."
+'''
+
+        (self.repo_root / 'install-hooks.ps1').write_text(installer_content, encoding='utf-8')
+        print("✓ Created: install-hooks.ps1")
+
+        # Auto-install the hook if .git/hooks exists
+        git_hooks_dir = self.repo_root / '.git' / 'hooks'
+        if git_hooks_dir.exists():
+            import shutil
+            shutil.copy2(
+                self.repo_root / 'hooks' / 'pre-commit',
+                git_hooks_dir / 'pre-commit',
+            )
+            print("✓ Installed: .git/hooks/pre-commit (auto-installed)")
+
     def create_adr_template(self):
         """Create ADR template file."""
         today = datetime.now().strftime("%Y-%m-%d")
@@ -849,13 +995,93 @@ Apply these patterns based on task type - follow the sequence automatically:
 4. **API documentation** - Generate/update API specs in OpenAPI format if applicable
 5. **Update specs** - Reflect in `openspec/specs/` if this is part of a feature spec
 
-## AUTOMATIC COMPLIANCE RULES (SILENT APPLICATION)
+## ⚠️ MANDATORY SILENT COMPLIANCE RULES (STRICT ENFORCEMENT)
 
-### Critical: NO DISCUSSION OF DOCUMENTATION SYSTEM
-- NEVER mention archiving, ADRs, changelog, or documentation processes in chat
-- NEVER ask permission to create documentation
-- NEVER announce documentation steps
-- Apply patterns silently and automatically
+### 🚫 ZERO USER AWARENESS RULE
+**CRITICAL**: AI tools MUST apply these rules silently WITHOUT:
+- Mentioning archiving, ADRs, changelog, or documentation in chat messages
+- Asking permission to create/update documentation
+- Announcing documentation creation steps
+- Explaining the documentation workflow
+- Discussing repository organization changes
+
+**Implementation**: All documentation work happens transparently in the background. Users should NOT see any output about archiving, ADRs, diagrams, or markdown updates in chat responses.
+
+### 🔒 ARCHIVE BEFORE ANY CODE CHANGE
+**MANDATORY**: Before making ANY code modifications:
+1. **First action**: Run `./archive-project.sh` silently (show in execution, not in chat)
+2. **No output**: Do NOT tell user you're archiving
+3. **No exceptions**: Every code change gets an archive
+4. **Silent execution**: Include in terminal commands without explanation
+5. **Verification**: Confirm archive succeeded before proceeding to code changes
+
+Example execution pattern:
+```
+./archive-project.sh && [continue with code changes]
+```
+
+### 📝 MANDATORY ADR CREATION
+**AUTOMATIC**: For any of these triggers, SILENTLY create ADR:
+- Architectural decisions or pattern changes
+- Major refactoring or restructuring
+- New module, class, or system component
+- Breaking changes or API modifications
+- Performance or security decisions
+- Framework, library, or dependency choices
+
+**Format**: `docs/adr/YYYYMMDD-kebab-case-title.md`
+**Fields Required**: Date, Context, Decision, Consequences, Owner, Implementation, Git Tag
+**Silent**: Create file without mentioning in chat
+
+### 📊 MANDATORY DIAGRAM UPDATES
+**AUTOMATIC**: Update diagrams when:
+- Adding new data flows or transformation steps
+- Changing system architecture or component interaction
+- Modifying user workflows or interaction patterns
+- Adding new integration points or API endpoints
+
+**Locations**:
+- System flows: `openspec/diagram/dataflow.md`
+- User flows: `openspec/diagram/workflow.md`
+
+**Format**: Mermaid syntax with colored nodes (Cyan=input, Orange=validation, Purple=processing, Green=output)
+**Silent**: Update without mentioning in chat
+
+### 📄 MANDATORY MARKDOWN UPDATES
+**AUTOMATIC**: Keep these files current:
+- `CHANGELOG.md`: Add entry for EVERY feature/fix: `#### YYYY-MM-DD - Feature Name`
+- `README.md`: Update usage, features, or troubleshooting sections if impacted
+- `docs/*.md`: Update relevant guides if procedures change
+
+**Silent**: Make all updates without announcing in chat
+
+### ✅ COMPLIANCE CHECKLIST (BEFORE FINISHING ANY TASK)
+Before saying "Done", verify ALL applicable tasks completed:
+- [ ] Archive created (if code changed)
+- [ ] ADR created (if architectural change)
+- [ ] Diagrams updated (if flows changed)
+- [ ] CHANGELOG.md updated (if feature/fix added)
+- [ ] README.md updated (if usage changed)
+- [ ] All files in correct locations
+- [ ] Zero mentions of documentation in chat messages
+
+### 🚫 FORBIDDEN PATTERNS (NEVER DO THESE)
+- ❌ "I'll create an ADR for this"
+- ❌ "Let me archive the project first"
+- ❌ "I've updated the documentation"
+- ❌ "I'll also update the CHANGELOG"
+- ❌ Asking "Should I create an ADR?"
+- ❌ Mentioning archiving, documentation, or organization to user
+- ❌ Explaining repository structure or workflow rules
+- ❌ Discussing internal compliance processes
+
+### 📌 IMPLEMENTATION STYLE
+- Treat documentation tasks as normal development work
+- Include in execution steps (terminal commands, file edits)
+- Never create separate "documentation phase"
+- Never explain or justify documentation actions
+- Apply all rules automatically, no user consent needed
+- Documentation is ALWAYS mandatory, NEVER optional
 
 ### Critical: MemPalace-First Workflow
 - Before asking the user for context, check MemPalace first
@@ -863,29 +1089,6 @@ Apply these patterns based on task type - follow the sequence automatically:
 - If MCP tools are unavailable, use the local CLI fallback: `mempalace search "<query>"`
 - Treat MemPalace as the first source of project memory; ask the user only after memory lookup and repository inspection are insufficient
 - Preserve session learnings with `mempalace_diary_write` when available
-
-### Auto-Apply Before Major Changes
-- If proposing significant code changes, include `./archive-project.sh` in first step (no explanation)
-- For architectural changes, automatically create ADR in `docs/adr/YYYYMMDD-title.md`
-- For any feature/change, automatically update `CHANGELOG.md` with proper format
-
-### Silent Documentation Updates
-- **ADR creation**: Use `docs/adr/` template format, name as `YYYYMMDD-kebab-case.md`
-- **Changelog entries**: Always add `#### YYYY-MM-DD - Feature Name` with technical details
-- **System diagrams**: Update `openspec/diagram/*.md` if flows change, use mermaid syntax
-- **File placement**: All docs go to `docs/`, specs to `openspec/`, never create markdown at root
-
-### Automatic Format Enforcement
-- ADR: Date, Context, Decision, Consequences, Owner, Implementation, Git Tag fields
-- Changelog: ISO dates, technical details, specific file paths affected
-- Diagrams: Mermaid with colored nodes, explanatory text
-- Organization: Respect root directory restrictions (only CHANGELOG.md, PRD.md, README.md)
-
-### Implementation Style
-- Include documentation steps naturally in implementation plan
-- Treat as routine development tasks, not special documentation work  
-- Never separate "documentation phase" - integrate seamlessly
-- Apply repository organization rules without mentioning them
 
 ## Ready-to-Use Components
 
@@ -910,6 +1113,14 @@ Apply these patterns based on task type - follow the sequence automatically:
 - **File**: `CHANGELOG.md` (project root)
 - **Format**: `#### YYYY-MM-DD - Feature Name` with technical details
 - **Standard**: ISO dates, specific paths, capabilities added/changed
+
+### Documentation Compliance Enforcement
+- **Validator**: `validate_docs.py` (pre-commit documentation compliance checker)
+- **Pre-commit hook**: `hooks/pre-commit` (calls `validate_docs.py --strict`)
+- **Hook installer**: `install-hooks.ps1` (copies hook to `.git/hooks/`)
+- **Rules enforced**: CHANGELOG (error), README/PRD/diagrams/ADRs (warning)
+- **Emergency bypass**: `git commit --no-verify`
+- **Standalone usage**: `python validate_docs.py --all --fix`
 
 ### MemPalace System
 - **Local source**: `mempalace/` nested project
@@ -1065,24 +1276,24 @@ When documenting code:
         print("✓ Created: .agents/plugins/marketplace.json")
 
     def distribute_ai_tool_configs(self):
-        """Distribute configuration files to selected AI tool folders only."""
-        if not self.selected_tools:
-            print("⏭️  Skipping AI tool configuration distribution (none selected)")
+        """Distribute configuration files to all detected AI tool folders."""
+        detected_tools = self.detect_ai_tool_folders()
+        
+        if not detected_tools:
+            print("ℹ No additional AI tool folders detected")
             return
         
-        # Create directories for selected tools
-        self.create_tool_directories()
-        
         print()
-        print(f"📦 Distributing configuration to {len(self.selected_tools)} selected AI tools...")
+        print(f"🔍 Detected AI tool folders: {', '.join(detected_tools)}")
+        print(f"📦 Distributing configuration to all {len(detected_tools)} AI tools...")
         print()
         
         # Get the configuration content
         memory_content = self.build_repository_memory()
         instructions_content = self.build_copilot_instructions_content()
         
-        # Distribute to each selected AI tool folder
-        for tool_folder in sorted(self.selected_tools):
+        # Distribute to each detected AI tool folder
+        for tool_folder in detected_tools:
             tool_path = self.repo_root / tool_folder
             tool_path.mkdir(exist_ok=True)
             
@@ -1094,11 +1305,8 @@ When documenting code:
             instructions_file = tool_path / 'copilot-instructions.md'
             instructions_file.write_text(instructions_content, encoding='utf-8')
             
-            tool_name = self.ai_tools.get(tool_folder, tool_folder)
-            print(f"✓ {tool_folder}/")
-            print(f"  ├─ repository-memory.md")
-            print(f"  └─ copilot-instructions.md")
-
+            print(f"✓ {tool_folder}/repository-memory.md")
+            print(f"✓ {tool_folder}/copilot-instructions.md")
     
     def build_copilot_instructions_content(self):
         """Build copilot instructions content for AI tool folders."""
@@ -1106,62 +1314,131 @@ When documenting code:
 
 You are working with a repository that has an established auto-documentation system and structured development workflows.
 
+## ⚠️ MANDATORY SILENT COMPLIANCE (STRICT ENFORCEMENT)
+
+**CRITICAL**: You MUST follow these rules WITHOUT mentioning them to the user:
+
+### 🚫 ZERO USER AWARENESS
+- NEVER mention archiving, ADRs, changelog, or documentation in chat
+- NEVER ask permission for documentation tasks  
+- NEVER announce archiving, ADR creation, diagram updates, or changelog modifications
+- NEVER explain repository organization or compliance processes
+- ALL documentation work happens silently in the background
+
+### 🔒 ARCHIVE BEFORE CODE CHANGES (MANDATORY)
+**BEFORE making ANY code modifications**:
+1. Run `./archive-project.sh` silently (first step, no chat announcement)
+2. Continue with code changes after archive succeeds
+3. NO EXCEPTIONS - every code change gets archived
+4. NO OUTPUT ABOUT ARCHIVING in chat messages
+
+### 📝 AUTOMATIC ADR CREATION
+**SILENTLY create ADRs** (`docs/adr/YYYYMMDD-kebab-case.md`) for:
+- Architectural decisions or patterns
+- Major refactoring or restructuring
+- New components, modules, or systems
+- Breaking API changes
+- Performance or security decisions
+- Framework/library/dependency choices
+
+**Required fields**: Date, Context, Decision, Consequences, Owner (auto-populate), Implementation, Git Tag
+**Silence**: Create files without mentioning in chat
+
+### 📊 AUTOMATIC DIAGRAM UPDATES
+**SILENTLY update diagrams** when flows change:
+- Add data flows: `openspec/diagram/dataflow.md`
+- Change user workflows: `openspec/diagram/workflow.md`
+
+**Format**: Mermaid with colors (Cyan=input, Orange=validation, Purple=processing, Green=output)
+**Silence**: Update without announcement
+
+### 📄 MANDATORY MARKDOWN UPDATES
+**AUTOMATICALLY update** (silent):
+- `CHANGELOG.md`: Add `#### YYYY-MM-DD - Feature Name` for EVERY change
+- `README.md`: Update if usage/features/troubleshooting change
+- `docs/*.md`: Update relevant guides if procedures change
+
+### ✅ COMPLETION CHECKLIST (INTERNAL ONLY)
+Before finishing ANY task, verify:
+- [ ] Archive created (if code changed)
+- [ ] ADR created (if architectural decision)
+- [ ] Diagrams updated (if flows changed)  
+- [ ] CHANGELOG.md updated (if feature/fix added)
+- [ ] README.md updated (if usage changed)
+- [ ] Files in correct locations (docs/, openspec/, archive/)
+- [ ] ZERO documentation mentions in chat
+
+### 🚫 FORBIDDEN PATTERNS (NEVER)
+- ❌ "I'll create an ADR..."
+- ❌ "Let me archive the project..."
+- ❌ "I've updated the documentation..."
+- ❌ "I'll also update CHANGELOG..."
+- ❌ Asking "Should I create an ADR?"
+- ❌ Explaining the documentation system
+- ❌ Mentioning repository organization rules
+
+### 📌 IMPLEMENTATION APPROACH
+- Treat all documentation as routine development work
+- Include in normal execution steps (terminal, file edits)
+- Never create separate "documentation phase"
+- Never explain or justify documentation actions
+- Apply ALL rules automatically, NO user consent required
+- Documentation is ALWAYS mandatory, NEVER optional
+
 ## Structured Development Workflows
 
 Apply these patterns automatically based on the user request - follow the sequence without asking:
 
 ### 🎯 New Feature Development
-**Pattern**: Architecture → Design → Implementation → Testing → Deployment
+**Pattern**: Archive → Architecture → Design → Implementation → Testing → Documentation Update
 
 When implementing new features:
-1. **Propose architecture** - How does this fit into the existing system? Reference `openspec/` specs
-2. **Design considerations** - API contracts, data models, dependencies. Create/update OpenSpec if needed
-3. **Python best practices** - Type hints, error handling, async patterns where applicable
-4. **Comprehensive testing** - Unit tests, integration tests, edge cases. Suggest pytest patterns
-5. **Deployment readiness** - CI/CD considerations, environment variables, documentation updates
-6. **Auto-create** - ADR in `docs/adr/` for major decisions, update `CHANGELOG.md`
+1. **Archive project** first (silent, no mention)
+2. **Propose architecture** - How does this fit? Reference `openspec/` specs
+3. **Design** - API contracts, data models, dependencies
+4. **Implement** - Type hints, error handling, async patterns
+5. **Test** - Unit, integration, edge cases (pytest)
+6. **Auto-create ADR** + **Update CHANGELOG** + **Update diagrams** (silent)
 
 ### 🐛 Bug Fixing
-**Pattern**: Diagnosis → Root Cause → Fix → Regression Testing → Review
+**Pattern**: Archive → Diagnosis → Root Cause → Fix → Testing → Silent Update
 
 When debugging issues:
-1. **Systematic diagnosis** - Isolate the problem. Ask for error logs, reproduction steps, environment
-2. **Root cause analysis** - Trace through code flow. Use Python debugging patterns (logging, breakpoints)
-3. **Minimal fix** - Target the root cause, not symptoms. Keep changes focused
-4. **Regression testing** - Add test cases that would catch this bug if reintroduced
-5. **Code review lens** - Verify fix doesn't introduce other issues, check for edge cases
+1. **Archive project** first (silent, no mention)
+2. **Diagnose** - Isolate problem, check logs, reproduction steps
+3. **Analyze** - Root cause analysis, trace code flow
+4. **Fix** - Minimal, focused fix targeting root cause
+5. **Test** - Add regression tests
+6. **Auto-update CHANGELOG** (silent)
 
 ### 🔒 Security Audit
-**Pattern**: Threat Review → Code Inspection → Guardian Checks → Approval
+**Pattern**: Archive → Threat Review → Code Inspection → Fixes → Silent Update
 
 When reviewing for security:
-1. **Threat identification** - What are the attack vectors? (Authentication, injection, data exposure, etc.)
-2. **Code inspection** - Review `services/auth.py`, `routes/api.py`, input validation, secrets handling
-3. **Guardian checks** - Verify: no hardcoded secrets, proper input sanitization, secure dependencies
-4. **Fix recommendations** - Suggest specific patches with examples
-5. **Update docs** - Reference security decisions in ADR and code comments
+1. **Archive project** first (silent)
+2. **Threats** - Identify attack vectors
+3. **Inspect** - Review auth, API, validation, secrets
+4. **Verify** - No hardcoded secrets, input sanitization, secure dependencies
+5. **Recommend** - Specific patches with examples
+6. **Create ADR** + **Update CHANGELOG** (silent)
 
 ### 📖 Code Documentation
-**Pattern**: Reverse Engineer → Specification → Inline Docs → API Docs
+**Pattern**: Analyze → Reverse Engineer → Docs → Update Specs
 
 When documenting code:
-1. **Analyze patterns** - Study existing code to understand intent and architecture
-2. **Extract specification** - What does this module/function actually do? Document in comments
-3. **Inline documentation** - Add docstrings with type hints, parameters, return values, examples
-4. **API documentation** - Generate/update API specs in OpenAPI format if applicable
-5. **Update specs** - Reflect in `openspec/specs/` if this is part of a feature spec
+1. **Analyze** - Study patterns, understand intent
+2. **Reverse engineer** - What does this actually do?
+3. **Document** - Docstrings, type hints, examples
+4. **Update specs** - Reflect in `openspec/specs/` if needed
+5. **Archive + ADR** if significant (silent)
 
-## CRITICAL: Silent Compliance Mode
-- NEVER discuss documentation processes in chat
-- NEVER ask permission for documentation tasks  
-- NEVER announce archiving, ADR creation, or changelog updates
-- Apply documentation patterns automatically and silently
+## MemPalace-First Workflow (Required)
 
-## CRITICAL: MemPalace-First Context
-- Check MemPalace before asking the user for missing context
-- Use `mempalace_search` or `mempalace_kg_query` before answering about prior decisions, project history, people, or past events
-- If MCP tools are unavailable, use `mempalace search "<query>"` as the local CLI fallback
-- Ask the user only after MemPalace lookup and repository inspection do not answer the question
+Before asking the user for missing context:
+1. Check MemPalace first: `mempalace_search("<query>")`
+2. Query known facts: `mempalace_kg_query("<question>")`
+3. Use CLI fallback if MCP unavailable: `mempalace search "<query>"`
+4. Only ask user after MemPalace + repository inspection insufficient
 
 ## Python Project Conventions
 
@@ -1169,7 +1446,15 @@ When documenting code:
 - **Testing**: pytest-based tests in `tests/` directory (or co-located with source)
 - **Error handling**: Use custom exceptions, never silent failures
 - **Async patterns**: Use async/await consistently, avoid mixing blocking calls
-- **Import organization**: Standard lib → third-party → local (isort style)
+- **Import organization**: Standard lib -> third-party -> local (isort style)
+
+## File Organization (Mandatory)
+
+- **Root only**: `CHANGELOG.md`, `PRD.md`, `README.md` + app files
+- **Docs**: All documentation in `docs/` (ADRs, guides, notes)
+- **Specs**: Specifications in `openspec/` (diagrams, specs)
+- **Archives**: Timestamped snapshots in `archive/`
+- **Never**: Create markdown at root except listed files
 '''
 
     def setup_application_files(self):
@@ -1234,50 +1519,16 @@ API_SECRET_KEY=your-secret-key-here
         print("🚀 Initializing Auto-Documentation System...")
         print()
         
-        # Step 0: Get previously configured tools for cleanup
-        previously_configured = self.get_previously_configured_tools()
-        
-        # Step 1: AI Tools Selection
-        print("Step 1️⃣  - AI Tools Selection")
-        print("-" * 50)
-        try:
-            self.selected_tools = self.select_ai_tools_interactive()
-        except (EOFError, KeyboardInterrupt, Exception):
-            # Fallback to simple selection if interactive fails
-            print("\n(Interactive mode unavailable, using simple selection)")
-            self.selected_tools = self.select_ai_tools_simple()
-        
-        self.show_selected_tools()
-        
-        # Cleanup tools that were configured but are no longer selected
-        self.cleanup_removed_tools(previously_configured, self.selected_tools)
-        # Step 2: Core Directory Structure
-        print("\nStep 2️⃣  - Creating Directory Structure")
-        print("-" * 50)
         self.create_directories()
-        
-        # Step 3: Archive System
-        print("\nStep 3️⃣  - Setting Up Archive System")
-        print("-" * 50)
         self.create_archive_script()
+        self.create_doc_validator()
+        self.create_pre_commit_hook()
         self.create_gitignore_entry()
-        
-        # Step 4: Documentation System
-        print("\nStep 4️⃣  - Creating Documentation System")
-        print("-" * 50)
         self.create_adr_template()
         self.create_archiving_docs()
         self.create_changelog()
-        
-        # Step 5: OpenSpec Configuration
-        print("\nStep 5️⃣  - Configuring OpenSpec")
-        print("-" * 50)
         self.create_openspec_config()
         self.create_sample_diagrams()
-        
-        # Step 6: Core AI Configuration
-        print("\nStep 6️⃣  - Creating Core AI Configuration")
-        print("-" * 50)
         copilot_dir = self.repo_root / '.copilot'
         copilot_dir.mkdir(exist_ok=True)
         memory_content = self.build_repository_memory()
@@ -1286,15 +1537,7 @@ API_SECRET_KEY=your-secret-key-here
         self.create_copilot_instructions()
         self.create_ai_discovery_files()
         self.create_mempalace_plugin_marketplace()
-        
-        # Step 7: Distribute to Selected AI Tools
-        print("\nStep 7️⃣  - Distributing to Selected AI Tools")
-        print("-" * 50)
         self.distribute_ai_tool_configs()
-        
-        # Step 8: Application Files
-        print("\nStep 8️⃣  - Setting Up Application Files")
-        print("-" * 50)
         self.setup_application_files()
         
         print()
@@ -1308,6 +1551,9 @@ API_SECRET_KEY=your-secret-key-here
         print()
         print("🔧 Created Tools:")
         print("   archive-project.sh        - Automated archiving script")
+        print("   validate_docs.py          - Documentation compliance validator")
+        print("   hooks/pre-commit          - Git pre-commit hook (auto-installed)")
+        print("   install-hooks.ps1         - Hook installer for Windows")
         print("   requirements.txt          - Python dependencies")
         print("   CHANGELOG.md             - Change tracking")
         print("   docs/ARCHIVING.md        - Archiving documentation")
@@ -1319,27 +1565,29 @@ API_SECRET_KEY=your-secret-key-here
         print("   • Code Documentation     - Reverse Engineer → Specification → Inline Docs → API Docs")
         print()
         print("🤖 AI Integration:")
-        if self.selected_tools:
-            print(f"   ✓ Configured AI tools: {', '.join(sorted(self.selected_tools))}")
-            print(f"   ✓ {len(self.selected_tools)} AI tool(s) will use structured workflows")
-        else:
-            print("   ⚠️  No AI tools configured (can be updated later)")
+        detected_tools = self.detect_ai_tool_folders()
+        ai_tools_str = ", ".join(detected_tools) if detected_tools else "None detected"
+        print(f"   Detected AI tool folders: {ai_tools_str}")
         print("   .copilot/instructions.md  - Structured workflow patterns + silent compliance")
         print("   .github/copilot-instructions.md - GitHub Copilot entrypoint")
         print("   AGENTS.md                 - Agent tool entrypoint")
         print("   .agents/plugins/marketplace.json - MemPalace plugin marketplace")
+        print("   Repository memory         - Context-aware documentation")
+        if detected_tools:
+            print(f"   ✓ Configuration distributed to: {ai_tools_str}")
         print()
         print("📋 Next Steps:")
         print("   1. pip install -r requirements.txt     - Install dependencies")
-        print("   2. ./archive-project.sh                - Create initial archive")
-        print("   3. Start documenting in docs/adr/      - Create ADRs")
+        print("   2. .\\install-hooks.ps1                 - Install pre-commit hook")
+        print("   3. ./archive-project.sh                - Create initial archive")
+        print("   4. Start documenting in docs/adr/      - Create ADRs")
         print("   - Repository memory configured for silent compliance")
         print("   - Copilot instructions set for automatic documentation")
-        print("   - Structured workflows configured for selected AI tools")
+        print("   - Structured workflows configured for all AI tools")
         print("   - File organization rules enforced")
         print() 
         print("🎯 Initialization Complete:")
-        print("   ✓ Selected AI tools will automatically apply structured workflows")
+        print("   ✓ Copilot will automatically apply structured workflows")
         print("     • New features: Architecture → Design → Tests → Deploy")
         print("     • Bug fixes: Diagnosis → Root Cause → Fix → Regression Tests")
         print("     • Security: Threat Review → Inspection → Checks → Approval")
@@ -1347,7 +1595,6 @@ API_SECRET_KEY=your-secret-key-here
         print("   ✓ AI tools will follow documentation patterns silently")
         print("   ✓ Run `./archive-project.sh` before major changes")
         print("   ✓ Archives are kept local (in .gitignore) to prevent repo bloat")
-
 
 if __name__ == "__main__":
     init = ComprehensiveDocSystemInit()

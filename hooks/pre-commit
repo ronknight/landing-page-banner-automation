@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-commit hook: Documentation Compliance Validator
+# Blocks commits when required documentation files are not updated alongside code changes.
+#
+# Install: copy or symlink this file to .git/hooks/pre-commit
+#   cp hooks/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit   (Unix/Mac)
+#
+# Skip (emergency): git commit --no-verify
+# Note: --no-verify should be used sparingly; it bypasses all doc checks.
+
+python validate_docs.py --strict 2>&1
+
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+    echo ""
+    echo "Commit aborted by documentation compliance check."
+    echo "Fix the issues above, then retry your commit."
+    echo ""
+    echo "To bypass (emergency only): git commit --no-verify"
+    exit 1
+fi
+
+exit 0
