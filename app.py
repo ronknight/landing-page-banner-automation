@@ -47,6 +47,30 @@ def flatten_tif_to_image_in_memory(tif_file):
         print(f"Error processing TIF: {tif_file} - {e.stderr.decode('utf-8')}")
         return None
 
+def resolve_event_background(event_config: dict) -> str:
+    """
+    Resolve the configured event background path with a legacy bg.png fallback.
+    """
+
+    configured_background = event_config.get("background", "bg.png")
+    background_path = os.path.join(os.getcwd(), configured_background)
+
+    if os.path.exists(background_path):
+        return background_path
+
+    fallback_path = os.path.join(os.getcwd(), "bg.png")
+    if os.path.exists(fallback_path):
+        print(
+            f"Warning: Background image '{configured_background}' not found. "
+            "Using fallback 'bg.png'."
+        )
+        return fallback_path
+
+    raise FileNotFoundError(
+        f"Background image '{configured_background}' not found, and fallback 'bg.png' is missing."
+    )
+
+
 def create_banner(item_numbers, caption, event_code):
     """
     Creates a banner by placing flattened product images (TIF) on a background image (bg.png),
@@ -65,14 +89,11 @@ def create_banner(item_numbers, caption, event_code):
     if event_code not in events["events"]:
         raise ValueError(f"Invalid event code: {event_code}. Please check your events.json file.")
 
-    caption_color = events["events"][event_code].get("spacer_color", "gray")
-    spacer_color = events["events"][event_code].get("caption_color", "black")
-    event_full_name = events["events"][event_code]["full_name"].lower().replace("'", "").replace(" ", "-")
-
-    background_path = os.path.join(os.getcwd(), "bg.png")
-
-    if not os.path.exists(background_path):
-        raise FileNotFoundError("Background image 'bg.png' not found in the current directory.")
+    event_config = events["events"][event_code]
+    caption_color = event_config.get("spacer_color", "gray")
+    spacer_color = event_config.get("caption_color", "black")
+    event_full_name = event_config["full_name"].lower().replace("'", "").replace(" ", "-")
+    background_path = resolve_event_background(event_config)
 
     # Open the background image as the canvas
     with Image(filename=background_path) as canvas:
@@ -123,6 +144,7 @@ def create_banner(item_numbers, caption, event_code):
         grid_height = rows * item_height
         grid_start_x = (canvas.width - grid_width) // 2  # Center grid horizontally
         grid_start_y = 10  # 10px top padding
+        placed_count = 0
 
         for idx, item_number in enumerate(item_numbers):
             tif_file = os.path.join(os.environ.get("TIFF_DIRECTORY"), f"{item_number}.tif")
@@ -143,8 +165,8 @@ def create_banner(item_numbers, caption, event_code):
             print(f"Item {idx+1}: Resized image dimensions: {img.width}x{img.height}")
 
             # Calculate position in the grid with proper centering
-            col = idx % cols
-            row = idx // cols
+            col = placed_count % cols
+            row = placed_count // cols
             cell_x = grid_start_x + (col * item_width)
             cell_y = grid_start_y + (row * item_height) + (row * row_spacing)
             
@@ -154,6 +176,7 @@ def create_banner(item_numbers, caption, event_code):
 
             # Composite the product image on top of the canvas
             canvas.composite(img, left=x, top=y)
+            placed_count += 1
             img.close()  # Free memory for the image
         
         print(f"Grid layout: {cols} columns x {rows} rows (item count: {item_count})")

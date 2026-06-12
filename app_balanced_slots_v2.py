@@ -209,6 +209,30 @@ def draw_caption(canvas, caption, caption_color):
         draw(canvas)
 
 
+def resolve_event_background(event_config: dict) -> str:
+    """
+    Resolve the configured event background path with a legacy bg.png fallback.
+    """
+
+    configured_background = event_config.get("background", "bg.png")
+    background_path = os.path.join(os.getcwd(), configured_background)
+
+    if os.path.exists(background_path):
+        return background_path
+
+    fallback_path = os.path.join(os.getcwd(), "bg.png")
+    if os.path.exists(fallback_path):
+        print(
+            f"Warning: Background image '{configured_background}' not found. "
+            "Using fallback 'bg.png'."
+        )
+        return fallback_path
+
+    raise FileNotFoundError(
+        f"Background image '{configured_background}' not found, and fallback 'bg.png' is missing."
+    )
+
+
 def create_banner(item_numbers, caption, event_code):
     """
     Creates a balanced category banner by placing flattened product images on bg.png,
@@ -229,14 +253,12 @@ def create_banner(item_numbers, caption, event_code):
     # Keep original behavior from your script:
     # spacer_color comes from caption_color, caption_color comes from spacer_color.
     # If your events.json names are reversed, switch these two lines.
-    caption_color = events["events"][event_code].get("spacer_color", "gray")
-    spacer_color = events["events"][event_code].get("caption_color", "black")
+    event_config = events["events"][event_code]
+    caption_color = event_config.get("spacer_color", "gray")
+    spacer_color = event_config.get("caption_color", "black")
 
-    event_full_name = safe_slug(events["events"][event_code]["full_name"])
-
-    background_path = os.path.join(os.getcwd(), "bg.png")
-    if not os.path.exists(background_path):
-        raise FileNotFoundError("Background image 'bg.png' not found in the current directory.")
+    event_full_name = safe_slug(event_config["full_name"])
+    background_path = resolve_event_background(event_config)
 
     tiff_directory = os.environ.get("TIFF_DIRECTORY")
     if not tiff_directory:
@@ -269,8 +291,9 @@ def create_banner(item_numbers, caption, event_code):
             if not img:
                 continue
 
-            # Use matching slot; for more items than slots, reuse last pattern safely.
-            slot = slots[idx % len(slots)]
+            # Use the next slot for each successfully loaded product.
+            slot_index = placed_count % len(slots)
+            slot = slots[slot_index]
 
             x, y, w, h = composite_product_in_slot(
                 canvas=canvas,
@@ -283,7 +306,7 @@ def create_banner(item_numbers, caption, event_code):
             placed_count += 1
             print(
                 f"Item {idx + 1} ({item_number}): "
-                f"Slot={idx % len(slots) + 1}, Size={w}x{h}, Position=({x}, {y})"
+                f"Slot={slot_index + 1}, Size={w}x{h}, Position=({x}, {y})"
             )
 
             img.close()

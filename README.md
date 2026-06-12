@@ -35,7 +35,7 @@ This project automates the creation of banners for landing pages by combining pr
 ## ✨ Features
 
 - Flatten and process TIF images into banners.
-- Customizable event themes via `events.json`.
+- Customizable event themes and backgrounds via `events.json`.
 - Automatic grid-based layout for multiple products.
 - Add captions and themed spacers for professional designs.
 - Save banners in lightweight `.webp` format.
@@ -96,10 +96,11 @@ This project automates the creation of banners for landing pages by combining pr
 ```plaintext
 .
 ├── banner_creator.py       # Main script for generating banners
-├── events.json             # JSON configuration for event themes
+├── events.json             # JSON configuration for event themes and backgrounds
 ├── requirements.txt        # Python dependencies
 ├── .env                    # Environment variables (e.g., TIFF_DIRECTORY)
-├── bg.png                  # Background image for banners
+├── bg.png                  # Fallback background image for banners
+├── bg/                     # Event-specific banner backgrounds
 └── README.md               # Project documentation
 ```
 

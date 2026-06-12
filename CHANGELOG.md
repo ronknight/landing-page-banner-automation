@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### 2026-06-05 - Event Background Selection
+- Added per-event `background` paths to `events.json`.
+- Updated banner generation to load the selected event background from configuration with legacy `bg.png` fallback.
+
+#### 2026-06-05 - Slot Assignment Fix
+- Fixed product placement so missing or failed TIF files no longer skip the first available banner slot.
+
 #### 2026-05-13 - Auto-Documentation System
 - Added timestamped archive directory system (`archive/<YYYY-MM-DD_HHmmss>/`) for local version control snapshots
 - Created `archive-project.sh` shell script for automated project archiving
